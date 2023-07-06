@@ -16,7 +16,9 @@ type TranslateRequest struct {
 }
 
 type TranslateResponse struct {
-	TranslatedText string `json:"translatedText"`
+	TranslatedText string `json:"translatedText,omitempty"`
+	Status         bool   `json:"status"`
+	Message        string `json:"message"`
 }
 
 func TranslateHandler(w http.ResponseWriter, r *http.Request) {
@@ -28,7 +30,7 @@ func TranslateHandler(w http.ResponseWriter, r *http.Request) {
 	var request TranslateRequest
 	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendErrorResponse(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
@@ -37,19 +39,33 @@ func TranslateHandler(w http.ResponseWriter, r *http.Request) {
 		To:   request.To,
 	})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		sendErrorResponse(w, "Translation failed", http.StatusInternalServerError)
 		return
 	}
 
 	response := TranslateResponse{
 		TranslatedText: translated,
+		Status:         true,
+		Message:        "",
 	}
 
+	sendJSONResponse(w, response, http.StatusOK)
+}
+
+func sendErrorResponse(w http.ResponseWriter, message string, statusCode int) {
+	response := TranslateResponse{
+		Status:  false,
+		Message: message,
+	}
+	sendJSONResponse(w, response, statusCode)
+}
+
+func sendJSONResponse(w http.ResponseWriter, data interface{}, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(response)
+	w.WriteHeader(statusCode)
+	err := json.NewEncoder(w).Encode(data)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		log.Printf("Failed to encode JSON response: %v", err)
 	}
 }
 
