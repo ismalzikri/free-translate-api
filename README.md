@@ -33,11 +33,11 @@ Start the API server:
 ```bash
 go run main.go
 ```
-The API server will start running on http://localhost:8080.
+The API server will start running on http://localhost:8000.
 
 You can now send translation requests to the API using HTTP POST requests. The endpoint for translation is /translate. Here's an example using curl:
 ```bash
-curl -X POST -H "Content-Type: application/json" -d '{"text": "Hello", "to": "id"}' http://localhost:8080/translate
+curl -X POST -H "Content-Type: application/json" -d '{"text": "Hello", "to": "id"}' http://localhost:8000/translate
 ```
 
 ## Supported Languages
