@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/bregydoc/gtranslate"
 	"github.com/rs/cors"
@@ -69,9 +70,32 @@ func sendJSONResponse(w http.ResponseWriter, data interface{}, statusCode int) {
 	}
 }
 
+func serveIndex(w http.ResponseWriter, r *http.Request) {
+	// Open the index.html file
+	file, err := os.Open("index.html")
+	if err != nil {
+		http.Error(w, "Could not open index.html", http.StatusInternalServerError)
+		return
+	}
+	defer file.Close()
+
+	// Get file metadata to fetch the modification time
+	stat, err := file.Stat()
+	if err != nil {
+		http.Error(w, "Could not retrieve file stats", http.StatusInternalServerError)
+		return
+	}
+
+	// Serve the file content
+	http.ServeContent(w, r, "index.html", stat.ModTime(), file)
+}
+
 func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/translate", TranslateHandler)
+
+	// Serve the index.html file at the root path
+	mux.HandleFunc("/", serveIndex)
 
 	c := cors.Default().Handler(mux)
 
